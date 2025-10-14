@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balance Bot AI Agent - Dynamic Presentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        /* General Reset and Customization */
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; } 
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        
+        /* Custom Palette Variables */
+        :root {
+            --color-primary: #4f46e5; /* Indigo-600 */
+            --color-accent: #06b6d4; /* Cyan-500 */
+            --color-highlight: #f97316; /* Orange-500 */
+            --color-text: #e2e8f0; /* Slate-200 */
+        }
+
+        /* Slide Transitions and Layout */
+        .full-slide { 
+            min-height: 90vh; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+            width: 100%; 
+            padding: 2rem; 
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.7s cubic-bezier(0.25, 0.8, 0.25, 1), transform 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Essential components for section switching */
+        .content-section { display: none; }
+        .content-section.active { display: flex; opacity: 1; transform: translateY(0); }
+        .nav-link.active { background-color: var(--color-accent); color: #0f172a; border-radius: 0.75rem; font-weight: 800; }
+        .nav-link { transition: all 0.3s ease-in-out; }
+        .nav-link:hover { background-color: #313e53; color: var(--color-accent); } 
+        
+        /* Cover Page Animation */
+        @keyframes fadeInSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glowing {
+            0% { box-shadow: 0 0 5px var(--color-accent); }
+            50% { box-shadow: 0 0 20px var(--color-accent), 0 0 30px var(--color-accent); }
+            100% { box-shadow: 0 0 5px var(--color-accent); }
+        }
+        .cover-title {
+            font-weight: 900; 
+            text-shadow: 0 4px 10px rgba(79, 70, 229, 0.8); /* Indigo Shadow */
+            animation: fadeInSlideUp 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        }
+        .cover-subtitle {
+            color: var(--color-highlight); /* Orange Accent */
+            animation: fadeInSlideUp 1s forwards, glowing 4s infinite alternate;
+            animation-delay: 0.3s;
+            text-shadow: 0 0 10px rgba(249, 115, 22, 0.7);
+        }
+
+        /* Card Hover Effect - More Pronounced 3D Lift */
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(0);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Flowchart Styles (Refined for Focus) */
+        .flow-box {
+            background-color: #1e293b; /* Slate-800 */
+            padding: 1.25rem;
+            border-radius: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            border: 3px solid #334155; /* Base border */
+            transition: all 0.4s ease-in-out;
+            transform: scale(1);
+        }
+        .flow-arrow {
+            font-size: 2.5rem;
+            color: #475569; /* Grayed out base arrow */
+            font-weight: 800;
+            line-height: 0.5;
+            margin: 0.75rem 0;
+            transition: all 0.4s;
+        }
+        .flow-step-active {
+            border-color: var(--color-highlight) !important; 
+            box-shadow: 0 0 25px rgba(249, 115, 22, 0.9), 0 0 5px rgba(249, 115, 22, 0.5) !important; 
+            transform: scale(1.05);
+            background-color: #0f172a; /* Darker background on active */
+        }
+        .flow-arrow-active {
+            color: var(--color-accent) !important; /* Cyan arrow */
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.9);
+            transform: scale(1.4);
+        }
+        
+        /* Narration Box (Focus State) */
+        #flow-narration {
+            min-height: 100px;
+            background-color: #0f172a;
+            color: var(--color-text);
+            border: 2px solid var(--color-accent);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
+            transition: all 0.3s;
+            transform: scale(1);
+        }
+        /* Play Button Style */
+        #play-flow {
+            transition: all 0.3s;
+            animation: glowing 3s infinite alternate; /* Give the button a subtle pulse */
+        }
+        #play-flow:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Custom Flowchart Layout Styles for Parallelism */
+        .flow-horizontal-group {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .flow-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 50%;
+        }
+        
+        .flow-connector-h {
+            font-size: 2.5rem;
+            color: #475569;
+            font-weight: 800;
+            line-height: 0.5;
+            align-self: center;
+            margin: 0 1rem; /* Horizontal spacing */
+            transform: rotate(90deg); /* Rotate arrow to point right */
+            transition: all 0.4s;
+        }
+        
+        .flow-connector-h.flow-arrow-active {
+            transform: rotate(90deg) scale(1.4);
+        }
+
+    </style>
+</head>
+<body class="flex min-h-screen">
+    <aside class="w-72 bg-gray-900 text-white p-6 fixed h-full hidden lg:block shadow-2xl z-20">
+        <h1 class="text-3xl font-extrabold text-indigo-400 mb-10 border-b-4 border-cyan-500 pb-4">
+            Balance Bot AI
+        </h1>
+        <nav id="desktop-nav">
+            <ul class="space-y-2">
+                <li><a href="#title" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">✨ Cover Page</a></li>
+                <li><a href="#problem" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">🚨 Problem Statement</a></li>
+                <li><a href="#team" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">👥 Project Team</a></li>
+                <li><a href="#project-view" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">💡 Project Overview</a></li>
+                <li><a href="#tech-stack" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">💻 Tech Stack</a></li>
+                <li><a href="#architecture" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">⚙️ Agent Architecture</a></li>
+                <li><a href="#demo-output" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">📊 Demo Output</a></li>
+                <li><a href="#core-concepts" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">🧠 Core Concepts</a></li>
+                <li><a href="#app-impact" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">🚀 Application & Impact</a></li>
+                <li><a href="#summary" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">✅ Summary</a></li>
+                <li><a href="#thank-you" class="nav-link text-xl font-semibold block p-4 rounded-lg hover:bg-slate-800 transition-colors duration-200">🙏 Thank You</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="lg:ml-72 flex-1 p-4 sm:p-6 md:p-10 relative">
+        <header class="sticky top-0 lg:hidden mb-6 bg-gray-900/95 backdrop-blur-sm p-4 rounded-b-xl shadow-xl z-10 border-b-2 border-indigo-500">
+            <select id="mobile-nav" class="w-full p-3 border border-gray-700 rounded-lg bg-gray-800 text-white shadow-inner">
+                <option value="#title">✨ Cover Page</option>
+                <option value="#problem">🚨 Problem Statement</option>
+                <option value="#team">👥 Project Team</option>
+                <option value="#project-view">💡 Project Overview</option>
+                <option value="#tech-stack">💻 Tech Stack</option>
+                <option value="#architecture">⚙️ Agent Architecture</option>
+                <option value="#demo-output">📊 Demo Output</option>
+                <option value="#core-concepts">🧠 Core Concepts</option>
+                <option value="#app-impact">🚀 Application & Impact</option>
+                <option value="#summary">✅ Summary</option>
+                <option value="#thank-you">🙏 Thank You</option>
+            </select>
+        </header>
+        
+        <div id="content-container" class="w-full">
+            <section id="title" class="content-section full-slide active">
+                <h2 class="cover-title text-8xl md:text-9xl text-indigo-400 mb-6">Balance Bot AI Agent</h2>
+                <h3 class="cover-subtitle text-4xl md:text-5xl font-light mb-8 pt-4" style="animation-delay: 0.5s;">Intelligent Data Analysis for Accounting & Book-Keeping</h3>
+            </section>
+
+            <section id="problem" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-8 border-b-4 border-cyan-500 pb-2">Problem Description</h2>
+                <div class="max-w-4xl bg-gray-800 p-12 rounded-2xl shadow-2xl border-l-8 border-orange-500 card-hover">
+                    <p class="text-3xl font-extrabold text-cyan-400 leading-relaxed">
+                        Transforming complex, raw financial data into accessible, real-time insights and visualizations using a conversational AI interface.
+                    </p>
+                    <p class="mt-8 text-xl text-gray-300 border-t border-gray-700 pt-6">
+                        The challenge is integrating a powerful LLM (Google Gemini) with industrial-scale data (PostgreSQL) and visualization tools (QuickChart) to provide in-depth analysis and reporting on demand.
+                    </p>
+                </div>
+            </section>
+            
+            <section id="team" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12">Project Team Members</h2>
+                <div class="max-w-7xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Rishabh Raj</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120203</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Rishabh Kumar</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120202</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Priyanshu Kumar</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120193</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Saatyak Srivastav</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120211</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Rudra Pratap Singh</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120209</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-xl border-t-4 border-indigo-500 card-hover">
+                        <p class="text-3xl font-bold text-indigo-300">Pankaj Yadav</p>
+                        <p class="text-sm text-orange-500 mt-3">Roll No: 2400290120169</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="project-view" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12 border-b-4 border-cyan-500 pb-2">Project Overview</h2>
+                <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+                    
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border-t-8 border-cyan-500 card-hover">
+                        <p class="text-5xl mb-4 text-cyan-400">🎯</p>
+                        <h3 class="text-3xl font-extrabold text-white mb-4">Core Objective: Real-Time Financial Intelligence</h3>
+                        <p class="text-xl text-gray-300 leading-relaxed">
+                            To build an intelligent, multi-agent system that provides <span class="font-extrabold">real-time financial analysis</span> and reporting through a conversational interface, transforming raw accounting data into actionable insights and visualizations.
+                        </p>
+                    </div>
+
+                    <div class="bg-gray-800 p-8 rounded-xl shadow-2xl border-t-8 border-cyan-500 card-hover">
+                        <p class="text-5xl mb-4 text-cyan-400">🧠</p>
+                        <h3 class="text-3xl font-extrabold text-white mb-4">Technical Integration Pillars</h3>
+                        <ul class="space-y-4 text-xl text-gray-300 list-disc list-inside">
+                            <li><span class="font-bold">LLM Core:</span> Google Gemini (Reasoning & NL-to-SQL).</li>
+                            <li><span class="font-bold">Orchestration:</span> n8n (Workflow automation).</li>
+                            <li><span class="font-bold">Agent Framework:</span> LangChain (Tool Calling & Memory).</li>
+                            <li><span class="font-bold">Data Source:</span> PostgreSQL (Secure, Industrial Data).</li>
+                        </ul>
+                    </div>
+
+                    <div class="md:col-span-2 mt-6 p-8 bg-gray-900 rounded-xl shadow-inner border border-gray-700">
+                        <h3 class="text-3xl font-bold text-orange-400 mb-6">Key Performance Indicators</h3>
+                        <div class="flex flex-wrap justify-around gap-6 text-center">
+                            <div class="p-4 bg-gray-800 rounded-lg w-40 shadow-lg border-b-4 border-indigo-500">
+                                <p class="text-4xl font-extrabold text-cyan-400">95%</p>
+                                <p class="text-sm text-gray-400">SQL Accuracy</p>
+                            </div>
+                            <div class="p-4 bg-gray-800 rounded-lg w-40 shadow-lg border-b-4 border-indigo-500">
+                                <p class="text-4xl font-extrabold text-cyan-400">15s</p>
+                                <p class="text-sm text-gray-400">Avg. Response Time</p>
+                            </div>
+                            <div class="p-4 bg-gray-800 rounded-lg w-40 shadow-lg border-b-4 border-indigo-500">
+                                <p class="text-4xl font-extrabold text-cyan-400">100%</p>
+                                <p class="text-sm text-gray-400">Security Guards</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tech-stack" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12 border-b-4 border-cyan-500 pb-2">Technology Stack</h2>
+                <div class="max-w-7xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 text-left p-6">
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-red-500 card-hover">
+                        <p class="text-5xl mb-3 text-red-400">🧠</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">Google Gemini</h3>
+                        <p class="text-lg text-gray-300">The core model for <span class="font-bold">reasoning</span> and converting complex Natural Language into functional, contextualized SQL statements.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-green-500 card-hover">
+                        <p class="text-5xl mb-3 text-green-400">⚙️</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">n8n Workflow</h3>
+                        <p class="text-lg text-gray-300">The <span class="font-bold">low-code automation engine</span> that handles the multi-step execution flow, API integration, and overall system orchestration.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-yellow-500 card-hover">
+                        <p class="text-5xl mb-3 text-yellow-400">🔗</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">LangChain</h3>
+                        <p class="text-lg text-gray-300">Framework for defining the specialized <span class="font-bold">AI agents</span> (Postgres, QuickChart) and managing the critical conversational memory.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-blue-500 card-hover">
+                        <p class="text-5xl mb-3 text-blue-400">🗄️</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">PostgreSQL</h3>
+                        <p class="text-lg text-gray-300">The powerful, secure database storing the <span class="font-bold">industrial accounting dataset</span>, enabling fast and complex queries.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-orange-500 card-hover">
+                        <p class="text-5xl mb-3 text-orange-400">📈</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">QuickChart / Chart.js</h3>
+                        <p class="text-lg text-gray-300">Used by the QuickChart Agent to generate <span class="font-bold">dynamic, embeddable visualizations</span> from the query results.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-b-4 border-cyan-500 card-hover">
+                        <p class="text-5xl mb-3 text-cyan-400">🖥️</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">Tailwind / Vanilla JS</h3>
+                        <p class="text-lg text-gray-300">The foundation for the <span class="font-bold">responsive, dark-mode-first user interface</span> and all interactive presentation elements.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="architecture" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-6 border-b-4 border-cyan-500 pb-2">Interactive Agent Architecture</h2>
+                
+                <div id="flow-narration" class="text-2xl h-24 flex items-center justify-center bg-gray-900/90 p-5 rounded-xl shadow-inner mb-6 w-full max-w-5xl text-left border-2 font-bold text-cyan-400 tracking-wide">
+                    Click Play to see the Balance Bot workflow in action!
+                </div>
+
+                <button id="play-flow" class="bg-cyan-600 text-white font-bold py-4 px-10 rounded-full shadow-lg hover:bg-cyan-700 transition duration-300 text-xl flex items-center mb-12">
+                    ▶️ Play Workflow
+                </button>
+
+                <div class="flow-container max-w-4xl w-full flex flex-col items-center">
+                    
+                    <div id="user-input" class="flow-box bg-indigo-900/50 border-indigo-500 w-full md:w-3/4 flow-step">
+                        <p class="text-2xl font-extrabold text-indigo-300">👤 User Query</p>
+                    </div>
+
+                    <p id="arrow-1" class="flow-arrow flow-connector">⬇️</p>
+
+                    <div id="primary-agent" class="flow-box bg-green-900/50 border-green-500 w-full md:w-full flow-step">
+                        <h3 class="text-xl font-bold text-green-300">Primary Agent (n8n Workflow)</h3>
+                        <p class="text-sm text-gray-400 mt-1">Evaluates intent & checks Conversation Memory (Postgres).</p>
+                    </div>
+                    
+                    <p id="arrow-2" class="flow-arrow flow-connector">⬇️</p>
+                    
+                    <div id="tool-router" class="flow-box border-yellow-500 bg-yellow-900/50 w-full md:w-3/4 flow-step">
+                        <h3 class="text-xl font-bold text-yellow-300">Tool Agent Router (Gemini Logic)</h3>
+                        <p class="text-sm text-gray-400 mt-1">Decides: SQL Query? Chart Generation? Text Reply?</p>
+                    </div>
+
+                    <div id="parallel-paths" class="flow-horizontal-group w-full max-w-4xl">
+                        <div class="flow-column">
+                            <p id="arrow-3a" class="flow-arrow flow-connector flow-connector-h">➡️</p> <div id="postgres-agent" class="flow-box border-purple-500 bg-purple-900/50 p-4 flow-step w-full">
+                                <h3 class="font-extrabold text-purple-300 text-xl">Postgres Agent</h3>
+                                <p class="text-sm text-gray-400">Generates SAFE SQL via LLM.</p>
+                            </div>
+                            <p id="arrow-4a" class="flow-arrow flow-connector">⬇️</p>
+                            <div id="db-exec" class="flow-box border-slate-500 bg-slate-700/50 p-4 flow-step w-full">
+                                <h3 class="font-extrabold text-slate-300 text-xl">PostgreSQL DB</h3>
+                                <p class="text-sm text-gray-400">Executes Query & Returns Data.</p>
+                            </div>
+                        </div>
+
+                        <div class="flow-column">
+                            <p id="arrow-3b" class="flow-arrow flow-connector flow-connector-h">➡️</p> <div id="quickchart-agent-top" class="flow-box border-orange-500 bg-orange-900/50 p-4 flow-step w-full">
+                                <h3 class="font-extrabold text-orange-300 text-xl">QuickChart Agent</h3>
+                                <p class="text-sm text-gray-400">Data to Chart JSON Converter.</p>
+                            </div>
+                            <p id="arrow-4b" class="flow-arrow flow-connector">⬇️</p>
+                            <div id="quickchart-api" class="flow-box border-red-500 bg-red-900/50 p-4 flow-step w-full">
+                                <h3 class="font-extrabold text-red-300 text-xl">QuickChart API</h3>
+                                <p class="text-sm text-gray-400">Generates Chart Image URL.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="arrow-5" class="flow-arrow flow-connector">⬇️</p>
+                    
+                    <div id="final-response" class="flow-box bg-indigo-900/50 border-indigo-500 w-full md:w-3/4 flow-step">
+                        <p class="text-2xl font-extrabold text-indigo-300">💬 Final AI Response</p>
+                        <p class="text-sm text-gray-400">(Final Synthesis)</p>
+                    </div>
+                    
+                </div>
+            </section>
+            
+            <section id="demo-output" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-10 border-b-4 border-cyan-500 pb-2">Demo Output: NL-to-Chart Visualization</h2>
+                
+                <div class="max-w-5xl w-full bg-gray-800 p-8 rounded-2xl shadow-2xl border-4 border-orange-500">
+                    <h3 class="text-3xl font-extrabold mb-6 text-orange-400">Simulated Conversation & Dynamic Result</h3>
+                    
+                    <div class="flex justify-end mb-6">
+                        <div class="chat-user p-5 max-w-xl text-lg font-medium bg-indigo-900/50 rounded-lg text-white">
+                            <span class="font-extrabold text-indigo-300">User:</span> Can you show me the total Revenue vs. Expenses for the last three quarters in a bar chart?
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-start mb-8">
+                        <div class="chat-bot p-5 max-w-xl text-lg font-medium bg-green-900/50 rounded-lg text-white">
+                            <span class="font-extrabold text-green-300">Balance Bot AI:</span> Analyzing the industrial accounting dataset now. Here is the comparison of total Revenue against total Expenses for Q1, Q2, and Q3, considering your current tenant context.
+                        </div>
+                    </div>
+
+                    <div class="w-full mt-8 bg-gray-900 p-6 rounded-xl shadow-inner border border-gray-700">
+                        <h4 class="text-xl font-bold mb-4 text-cyan-400">Generated Real-Time Visualization (Chart.js)</h4>
+                        <div class="w-full mx-auto max-w-3xl h-[50vh] max-h-[450px]">
+                            <canvas id="revenueExpenseChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="core-concepts" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12 border-b-4 border-cyan-500 pb-2">Core Concepts: Intelligence & Safety</h2>
+                <div class="max-w-7xl w-full grid grid-cols-1 md:grid-cols-3 gap-8 text-left p-6">
+                    
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-purple-500 card-hover">
+                        <p class="text-5xl mb-3 text-purple-400">💬</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">Conversational Memory</h3>
+                        <ul class="list-disc list-inside text-lg text-gray-300 space-y-1">
+                            <li><span class="font-bold">Stateful Chat:</span> Postgres stores conversation history for context.</li>
+                            <li><span class="font-bold">Coherence:</span> Allows follow-up questions without needing a full re-query (e.g., "What about Q4 now?").</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-orange-500 card-hover">
+                        <p class="text-5xl mb-3 text-orange-400">🔒</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">Secure & Guarded Execution</h3>
+                        <ul class="list-disc list-inside text-lg text-gray-300 space-y-1">
+                            <li><span class="font-bold">Multi-Tenancy:</span> The 'Set Tenant Context' tool strictly isolates data per user/company.</li>
+                            <li><span class="font-bold">SQL Safety:</span> 'Set Session Guards' actively prevent destructive commands (DROP, DELETE, etc.).</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-2xl border-t-4 border-cyan-500 card-hover">
+                        <p class="text-5xl mb-3 text-cyan-400">🛠️</p>
+                        <h3 class="text-2xl font-extrabold text-white mb-2">Tool Augmented Reasoning</h3>
+                        <ul class="list-disc list-inside text-lg text-gray-300 space-y-1">
+                            <li><span class="font-bold">LLM as Planner:</span> Gemini decides the optimal <span class="font-bold">tool-call chain</span> (e.g., Postgres -> QuickChart).</li>
+                            <li><span class="font-bold">Efficiency:</span> Tools handle complex external interaction, freeing the LLM for high-level reasoning.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="app-impact" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12 border-b-4 border-cyan-500 pb-2">Application & Business Impact</h2>
+                
+                <div class="max-w-7xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 text-left p-6">
+                    
+                    <h3 class="col-span-full text-3xl font-extrabold text-orange-400 mb-2 mt-4 border-b border-gray-700 pb-2">Real-World Applications</h3>
+
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-indigo-600 card-hover">
+                        <p class="text-4xl mb-3 text-indigo-400">📊</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Executive Reporting</h4>
+                        <p class="text-md text-gray-300">Instant, conversational access to KPIs like liquidity, profitability, and burn rate for leadership.</p>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-indigo-600 card-hover">
+                        <p class="text-4xl mb-3 text-indigo-400">📝</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Audit & Compliance</h4>
+                        <p class="text-md text-gray-300">Rapid generation of custom reports for regulatory checks and internal auditing purposes.</p>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-indigo-600 card-hover">
+                        <p class="text-4xl mb-3 text-indigo-400">🔎</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Budget Analysis</h4>
+                        <p class="text-md text-gray-300">Enables non-technical department managers to analyze their own budgets and spending.</p>
+                    </div>
+                    
+                    <h3 class="col-span-full text-3xl font-extrabold text-cyan-400 mt-6 mb-2 border-b border-gray-700 pb-2">Efficiency & Strategic Impact</h3>
+
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-green-600 card-hover">
+                        <p class="text-4xl mb-3 text-green-400">⏳</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Massive Time Savings</h4>
+                        <p class="text-md text-gray-300">Significantly reduces dependence on data engineering teams for routine financial report generation.</p>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-green-600 card-hover">
+                        <p class="text-4xl mb-3 text-green-400">💡</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Data Democratization</h4>
+                        <p class="text-md text-gray-300">Complex financial data becomes accessible to all staff, fostering data-driven decision-making.</p>
+                    </div>
+                    
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-l-4 border-green-600 card-hover">
+                        <p class="text-4xl mb-3 text-green-400">🎯</p>
+                        <h4 class="text-xl font-bold text-white mb-2">Enhanced Accuracy</h4>
+                        <p class="text-md text-gray-300">AI-generated, tested SQL is often more precise than manually written queries, reducing human error.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="summary" class="content-section full-slide">
+                <h2 class="text-5xl font-bold text-white mb-12 border-b-4 border-cyan-500 pb-2">Summary: The Balance Bot Achievement</h2>
+                <div class="max-w-5xl w-full bg-gray-800 p-12 rounded-2xl shadow-2xl border-4 border-indigo-500">
+                    <ul class="space-y-8 text-xl text-gray-300 text-left">
+                        <li class="flex items-start">
+                            <span class="text-4xl text-cyan-400 mr-4 font-extrabold">1️⃣</span>
+                            <p>We built a robust, <span class="font-bold">multi-agent AI system</span> powered by <span class="font-bold">Google Gemini</span> and orchestrated via <span class="font-bold">n8n</span> and <span class="font-bold">LangChain</span>.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-4xl text-cyan-400 mr-4 font-extrabold">2️⃣</span>
+                            <p>The system intelligently translates natural language into secure <span class="font-bold">PostgreSQL queries</span> and automatically renders the results into <span class="font-bold">real-time visualizations</span>.</p>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-4xl text-cyan-400 mr-4 font-extrabold">3️⃣</span>
+                            <p>This integration provides a seamless, context-aware solution, making financial analysis <span class="font-bold">instant, secure, and intuitive</span> for end-users.</p>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="thank-you" class="content-section full-slide">
+                <h2 class="text-8xl font-extrabold text-white mb-8">Thank You! 🎉</h2>
+                <h3 class="text-4xl font-semibold text-orange-500 mb-12 cover-subtitle" style="animation-duration: 2s; animation-iteration-count: 3; animation-delay: 0s;">
+                    We look forward to your questions.
+                </h3>
+                
+                <div class="max-w-xl w-full bg-gray-900 p-10 rounded-2xl shadow-2xl border-4 border-cyan-500">
+                    <p class="text-3xl font-extrabold text-cyan-300 mb-0">
+                        The <span class="font-extrabold">Balance Bot AI Agent</span> Team
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const desktopNavLinks = document.querySelectorAll('#desktop-nav .nav-link');
+    const mobileNav = document.getElementById('mobile-nav');
+    const contentSections = document.querySelectorAll('.content-section');
+    
+    // --- Chart Rendering Logic ---
+    function renderDemoChart() {
+        const ctx = document.getElementById('revenueExpenseChart');
+
+        if (window.demoChartInstance) {
+             window.demoChartInstance.destroy();
+             window.demoChartInstance = null;
+        }
+
+        // Simulated Data (As if returned from the Postgres Query)
+        const data = {
+            labels: ['Q1 2024', 'Q2 2024', 'Q3 2024'],
+            datasets: [
+                {
+                    label: 'Revenue (in $M)',
+                    data: [12.5, 14.2, 16.8],
+                    backgroundColor: 'rgba(6, 182, 212, 0.8)', // Cyan-500
+                    borderColor: 'rgb(6, 182, 212)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                },
+                {
+                    label: 'Expenses (in $M)',
+                    data: [8.1, 9.5, 11.0],
+                    backgroundColor: 'rgba(249, 115, 22, 0.8)', // Orange-500
+                    borderColor: 'rgb(249, 115, 22)',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }
+            ]
+        };
+
+        if (ctx) {
+            window.demoChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, 
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Q1-Q3 Financial Performance (Simulated Data)',
+                            color: '#e2e8f0', // Light text color
+                            font: { size: 20, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#a0a7b4' // Gray text color for labels
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Amount ($M)',
+                                color: '#e2e8f0'
+                            },
+                            ticks: { color: '#e2e8f0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#e2e8f0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // --- Architecture Animation Logic (Updated for Parallel Paths) ---
+    const flowSteps = [
+        { id: 'user-input', narration: 'Step 1: The user submits a natural language query, such as "Show me the revenue chart."' },
+        { id: 'arrow-1', type: 'arrow' },
+        { id: 'primary-agent', narration: 'Step 2: The Primary Agent (n8n Workflow) receives the query, leverages Gemini for intent, and retrieves conversation memory.' },
+        { id: 'arrow-2', type: 'arrow' },
+        { id: 'tool-router', narration: 'Step 3: The Tool Agent Router (Gemini Logic) decides the appropriate tool. Since a chart is requested, it needs to first run an SQL query for data.' },
+        // Data Path (Left Column)
+        { id: 'arrow-3a', type: 'arrow-h' },
+        { id: 'postgres-agent', narration: 'Step 4a (Data Path): The Postgres Agent is triggered. It uses Gemini to generate a secure SQL query to retrieve the data.' },
+        { id: 'arrow-4a', type: 'arrow' },
+        { id: 'db-exec', narration: 'Step 5a (Data Path): The PostgreSQL Database executes the query and returns the raw data (e.g., [Q1: $12.5M, Q2: $14.2M]).' },
+        // Chart Path (Right Column) - Activated AFTER getting data.
+        { id: 'arrow-3b', type: 'arrow-h', narration: 'Step 4b (Chart Path): The QuickChart Agent is activated to prepare for visualization, knowing data will be ready soon.'},
+        { id: 'quickchart-agent-top', narration: 'Step 6 (Chart Path): The QuickChart Agent receives the raw data and converts it into a valid Chart.js JSON configuration.' },
+        { id: 'arrow-4b', type: 'arrow' },
+        { id: 'quickchart-api', narration: 'Step 7 (Chart Path): The QuickChart API generates the chart image and returns the final chart URL.' },
+        // Final Synthesis
+        { id: 'arrow-5', type: 'arrow' },
+        { id: 'final-response', narration: 'Step 8: The final synthesis occurs. The Primary Agent combines the text explanation, the data findings, and the chart URL for the Final AI Response.' }
+    ];
+
+    let currentStep = 0;
+    let isAnimating = false;
+    let timeoutId = null;
+    const narrationBox = document.getElementById('flow-narration');
+    const playButton = document.getElementById('play-flow');
+
+    function resetFlow() {
+        clearTimeout(timeoutId);
+        isAnimating = false;
+        currentStep = 0;
+        playButton.innerHTML = '▶️ Play Workflow';
+        playButton.classList.replace('bg-red-600', 'bg-cyan-600');
+        narrationBox.innerHTML = 'Click Play to see the Balance Bot workflow in action!';
+
+        document.querySelectorAll('.flow-box, .flow-connector').forEach(el => {
+            el.classList.remove('flow-step-active', 'flow-arrow-active');
+        });
+    }
+
+    function animateArchitecture() {
+        if (isAnimating) {
+            resetFlow();
+            return;
+        }
+
+        isAnimating = true;
+        currentStep = 0;
+        playButton.innerHTML = '⏹️ Stop Workflow';
+        playButton.classList.replace('bg-cyan-600', 'bg-red-600');
+        
+        document.querySelectorAll('.flow-box, .flow-connector').forEach(el => {
+            el.classList.remove('flow-step-active', 'flow-arrow-active');
+        });
+
+        function nextStep() {
+            if (!isAnimating || currentStep >= flowSteps.length) {
+                if (isAnimating) {
+                    isAnimating = false;
+                    playButton.innerHTML = '🔄 Replay Workflow';
+                    playButton.classList.replace('bg-red-600', 'bg-cyan-600');
+                    narrationBox.innerHTML = 'Animation finished. The full cycle is complete!';
+                }
+                return;
+            }
+
+            const step = flowSteps[currentStep];
+            const element = document.getElementById(step.id);
+            const isArrow = step.type === 'arrow' || step.type === 'arrow-h';
+
+            // --- State Management: Remove highlight from the PREVIOUS BOX/ARROW ---
+            if (currentStep > 0) {
+                const prevStep = flowSteps[currentStep - 1];
+                const prevElement = document.getElementById(prevStep.id);
+                if (prevElement) {
+                    const prevIsArrow = prevStep.type === 'arrow' || prevStep.type === 'arrow-h';
+                    prevElement.classList.remove(prevIsArrow ? 'flow-arrow-active' : 'flow-step-active');
+                }
+            }
+            
+            // --- Apply highlight to CURRENT BOX/ARROW ---
+            if (element) {
+                if (isArrow) {
+                    element.classList.add('flow-arrow-active');
+                    // Use narration for horizontal arrows (Steps 4a and 4b)
+                    if (step.narration) {
+                        narrationBox.innerHTML = step.narration;
+                    }
+                } else {
+                    element.classList.add('flow-step-active');
+                    narrationBox.innerHTML = step.narration;
+                }
+            }
+            
+            currentStep++;
+            
+            // Shorter delay for arrows (700ms), longer for narrated boxes (4s)
+            const delay = isArrow ? 700 : 4000; 
+
+            timeoutId = setTimeout(nextStep, delay);
+        }
+
+        nextStep();
+    }
+
+    // --- General Navigation Logic ---
+    function navigateTo(hash) {
+        if (hash !== '#architecture') {
+            resetFlow();
+        }
+        
+        // Update sidebar links (desktop)
+        desktopNavLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === hash);
+        });
+
+        // Toggle visibility of content sections
+        contentSections.forEach(section => {
+            const isActive = section.id === hash.substring(1);
+            section.classList.toggle('active', isActive);
+            if (isActive && window.innerWidth < 1024) {
+                document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+        
+        // Update mobile dropdown
+        mobileNav.value = hash;
+        
+        // Handle chart rendering/destruction
+        if (hash === '#demo-output') {
+            // Wait a moment for the section to fully become active before rendering the chart
+            setTimeout(renderDemoChart, 100); 
+        } else {
+            if (window.demoChartInstance) {
+                window.demoChartInstance.destroy();
+                window.demoChartInstance = null;
+            }
+        }
+    }
+
+    // Event Listeners
+    desktopNavLinks.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const hash = e.currentTarget.getAttribute('href');
+            navigateTo(hash);
+            history.pushState(null, null, hash); 
+        });
+    });
+
+    mobileNav.addEventListener('change', () => {
+        const hash = mobileNav.value;
+        navigateTo(hash);
+        history.pushState(null, null, hash);
+    });
+    
+    playButton.addEventListener('click', animateArchitecture);
+
+    // Initialization
+    const initialHash = window.location.hash || '#title';
+    navigateTo(initialHash);
+
+    window.addEventListener('popstate', () => {
+        navigateTo(window.location.hash || '#title');
+    });
+});
+</script>
+</body>
+</html>
